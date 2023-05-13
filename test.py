@@ -13,16 +13,21 @@ except ValueError as e:
     sys.stderr.write("Error parsing JSON input: {}\n".format(e))
     sys.exit(1)
 
-# Remove seen problems
-input_dict['problems'] = [entry for entry in input_dict['problems'] if entry['completed_count'] == 0]
+# Unseen problems 
+unseen_problems = [entry for entry in input_dict['problems'] if entry['completed_count'] == 0]
+unseen_tutored_problems = [entry for entry in unseen_problems if entry['name'] not in ['Mid-Question']]
 
-# Custom selection
-has_mastered_a_skill = sum([entry['p_known'] > .8 for entry in input_dict['skills']]) >= 3
+# End if no more unseen tutor problems
+ans = 'END' if len(unseen_tutored_problems) == 0 else unseen_tutored_problems[0]['name']
 
-# Default is next problem
-ans = input_dict['problems'][0]['name']
+# Check if at least two skills have been mastered
+two_skills = sum([entry['p_known'] > .95 for entry in input_dict['skills']]) >= 2
 
-# Once three skills are mastered, show a specific problem
-if has_mastered_a_skill: ans = '1+2(2x-1)=7'
+# Once two skills are mastered, show mastery question (once)
+if two_skills and 'Mid-Question' in [entry['name'] for entry in unseen_problems]: ans = 'Mid-Question'
+
+# Check if at least 5 skills have been mastered
+five_skills = sum([entry['p_known'] > .95 for entry in input_dict['skills']]) >= 5
+if five_skills: ans = 'END'
 
 print("""{"problem_name":"%s"}""" % ans)
